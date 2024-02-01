@@ -22,6 +22,9 @@ import { saveBooking } from "../_actions/save-booking";
 import { setHours } from "date-fns/setHours";
 import { setMinutes } from "date-fns/setMinutes";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Toaster } from "@/app/_components/ui/sonner";
+import { useRouter } from "next/navigation";
 
 interface ServiceItemProps {
     barbershop: Barbershop;
@@ -30,6 +33,7 @@ interface ServiceItemProps {
 }
 
 const ServiceItem = ({ service, isAuthenticated, barbershop }: ServiceItemProps) => {
+    const router = useRouter();
 
     const {data} = useSession();
 
@@ -38,6 +42,8 @@ const ServiceItem = ({ service, isAuthenticated, barbershop }: ServiceItemProps)
     const [hour, setHour] = useState<string | undefined>();
 
     const [submitIsLoading, setSubmitIsLoading] = useState(false);
+
+    const [sheetIsOpen, setSheetIsOpen] = useState(false);
 
     const handleDateClick = (date: Date | undefined) => {
         setDate(date);
@@ -72,8 +78,27 @@ const ServiceItem = ({ service, isAuthenticated, barbershop }: ServiceItemProps)
                 date: newDate,
                 userId: (data.user as any).id
             })
+
+            setSheetIsOpen(false);
+            setHour(undefined);
+            setDate(undefined);
+            toast("Reserva realizada com sucesso!",{
+                description: format(newDate, "'Para' dd 'de' MMMM 'às' HH':'mm'.'", {
+                    locale: ptBR
+                }),
+                action: {
+                    label: "Visualizar",
+                    onClick: () => router.push("/boobkings")
+                },
+                duration: 5000
+            })
+            
         } catch (error) {
+            toast("Ocorreu um erro!",{
+                description: "Tente novamente."
+            })
             console.log(error);
+
         } finally{
             setSubmitIsLoading(false);
         }
@@ -106,7 +131,7 @@ const ServiceItem = ({ service, isAuthenticated, barbershop }: ServiceItemProps)
                                     currency: "BRL",
                                 }).format(Number(service.price))}
                             </p>
-                            <Sheet>
+                            <Sheet open={sheetIsOpen} onOpenChange={setSheetIsOpen}>
                                 <SheetTrigger asChild>
                                     <Button
                                         variant="secondary"
